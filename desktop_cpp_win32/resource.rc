@@ -1,0 +1,34 @@
+#include <windows.h>
+
+IDI_ICON1 ICON "app.ico"
+
+1 24 "app.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 2,1,0,0
+PRODUCTVERSION 2,1,0,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x40004L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "ETC Official\0"
+            VALUE "FileDescription", "ETC+ Protect Tool\0"
+            VALUE "FileVersion", "2.1.0.0\0"
+            VALUE "InternalName", "ETC_Protector\0"
+            VALUE "LegalCopyright", "(C) 2026 ETC Official\0"
+            VALUE "OriginalFilename", "ETC_Protector.exe\0"
+            VALUE "ProductName", "ETC+ 加固卫士\0"
+            VALUE "ProductVersion", "2.1.0.0\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END

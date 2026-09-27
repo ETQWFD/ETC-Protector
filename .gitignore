@@ -1,0 +1,10 @@
+# 构建产物与运行期文件不入库（通过 GitHub Release 分发）
+out/
+android/out/
+logs/
+core/
+keys/
+config.json
+etc_config.txt
+*.log
+.DS_Store
