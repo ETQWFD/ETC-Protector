@@ -8,7 +8,7 @@
 
 int main(int argc, char** argv) {
     if (argc < 3) {
-        printf("ETC+ Protector Engine v2.1 (C++)\n"
+        printf("ETC+ 加固引擎 v2.1 (C++)\n"
                "Usage:\n"
                "  %s check <apk>\n"
                "  %s harden <input.apk> <output.apk> [mode=0|1] [brand] [version]\n"

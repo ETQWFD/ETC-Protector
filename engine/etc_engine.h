@@ -29,7 +29,7 @@ struct HardenOptions {
     int mode = 0;              // 0=标准(明文标识) 1=深度(标识加密)
     bool add_marker = true;
     bool write_integrity = true;
-    std::string brand = "ETC+ Protector";
+    std::string brand = "ETC+加固";
     std::string version = "2.1";
     int zip_level = 6;         // deflate 压缩级别
 };

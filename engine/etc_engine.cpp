@@ -328,10 +328,10 @@ CheckResult check_apk(const std::string& apk_path) {
     }
 
     r.entry_count = n;
-    if (!has_manifest || !has_dex) {
+    if (!has_manifest) {
         mz_zip_reader_end(&zip);
         r.state = ApkState::NOT_APK;
-        r.message = "缺少 AndroidManifest.xml 或 DEX，不是有效APK";
+        r.message = "缺少 AndroidManifest.xml，不是有效APK";
         return r;
     }
 
@@ -380,14 +380,14 @@ CheckResult check_apk(const std::string& apk_path) {
             mz_zip_reader_end(&zip3);
         }
         r.state = ApkState::ETC_PROTECTED;
-        if (r.brand.empty()) r.brand = "ETC+ Protector";
+        if (r.brand.empty()) r.brand = "ETC+加固";
         r.message = "该APK已由 " + r.brand + " 加固，禁止二次加固";
         return r;
     }
 
     if (has_sig) {
         r.state = ApkState::ETC_PROTECTED;
-        r.brand = "ETC+ Protector";
+        r.brand = "ETC+加固";
         r.version = "2.1";
         r.message = "该APK已由 ETC+ 加固（旧标识），禁止二次加固";
         return r;

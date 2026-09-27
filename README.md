@@ -1,4 +1,4 @@
-# ETC+ 加固卫士 (ETC+ Protector)
+# ETC+ 加固卫士 (ETC+加固)
 
 > 真正可用的 APK 加固工具 · 三语言重构版（C++ / Python / Java）
 > 版本 v2.1 · © 2026 ETC官方
@@ -16,7 +16,7 @@ ETC+ 加固卫士是一款面向 Android APK 的**防篡改加固工具**，用 
 
 1. **不修改任何 DEX**——不注入壳、不篡改字节码，应用安装后 100% 正常使用、不闪退；
 2. **全文件 SHA-256 清单**——加固时计算 APK 内所有文件的哈希并加密写入 `assets/etc_integrity.json`，任何文件被篡改都能被 `检测` 功能发现；
-3. **品牌标识注入**——写入 `assets/etc_protect.etc` 与 `META-INF/ETCPLUS.SF`，MT 管理器与系统「加固状态」字段将显示 **ETC+ Protector**；
+3. **品牌标识注入**——写入 `assets/etc_protect.etc` 与 `META-INF/ETCPLUS.SF`，MT 管理器与系统「加固状态」字段将显示 **ETC+加固**；
 4. **禁止二次加固**——对已加固的 APK 导入时会检测到保护标识并拒绝，防止重复处理导致问题；
 5. **输出全新文件**——加固产物为新 APK，自动 zipalign + v2/v3 签名，可直接安装。
 
@@ -57,7 +57,7 @@ g++ -O2 -std=c++17 engine/main_cli.cpp engine/etc_engine.cpp \
 | APK 签名 | v2 + v3 方案验证通过 |
 | 加固后安装运行 | 不闪退，正常使用 |
 | 篡改检测 | 修改任意文件后 verify 失败 |
-| 加固状态字段 | 显示「ETC+ Protector」 |
+| 加固状态字段 | 显示「ETC+加固」 |
 
 ## 关于杀毒软件误报
 

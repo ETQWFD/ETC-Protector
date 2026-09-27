@@ -185,7 +185,7 @@ public class MainActivity extends Activity {
         row3.setGravity(Gravity.CENTER_VERTICAL);
         row3.addView(label("品牌", false));
         brandEdit = new EditText(this);
-        brandEdit.setText("ETC+ Protector");
+        brandEdit.setText("ETC+加固");
         row3.addView(brandEdit, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         row3.addView(label("版本", false));
         verEdit = new EditText(this);
@@ -446,7 +446,7 @@ public class MainActivity extends Activity {
                 if (n.equals(MARKER_PATH)) marker = true;
                 if (n.equals(SIG_PATH)) sig = true;
             }
-            if (!manifest || dex == 0) return new int[]{0, dex};
+            if (!manifest) return new int[]{0, dex};
             if (marker || sig) return new int[]{2, dex};
             String lows = low.toString();
             for (String p : PACKER_MARKS) if (lows.contains(p)) return new int[]{3, dex};
@@ -526,7 +526,7 @@ public class MainActivity extends Activity {
             String jsonText = decryptText(new String(readAll(z.getInputStream(ie))));
             JSONObject manifest = new JSONObject(jsonText);
             JSONObject files = manifest.getJSONObject("files");
-            String brand = manifest.optString("brand", "ETC+ Protector");
+            String brand = manifest.optString("brand", "ETC+加固");
             String version = manifest.optString("version", "2.1");
             int mode = manifest.optInt("mode", 0);
             StringBuilder bad = new StringBuilder();
@@ -565,11 +565,10 @@ public class MainActivity extends Activity {
 
     // ---------------- 交互逻辑 ----------------
     private void pickApk() {
+        // 不限制 MIME，避免部分机型把 APK 置灰；选入后按内容校验
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                "application/vnd.android.package-archive", "application/octet-stream"});
         startActivityForResult(intent, 1001);
     }
 

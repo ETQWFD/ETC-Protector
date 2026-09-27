@@ -106,7 +106,7 @@ static const int THEME_COUNT = sizeof(THEMES) / sizeof(THEMES[0]);
 // ---------------- 配置（key=value 简单格式） ----------------
 struct Config {
     int theme = 0;
-    std::wstring brand = L"ETC+ Protector";
+    std::wstring brand = L"ETC+加固";
     std::wstring version = L"2.1";
     int font_size = 12;
     std::wstring ndk, maven, jar;
@@ -849,7 +849,8 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
     WNDCLASSEXW wc{ sizeof(wc) };
     wc.lpfnWndProc = MainWndProc;
     wc.hInstance = hInst;
-    wc.hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_ICON1));
+    wc.hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(101));
+    wc.hIconSm = LoadIconW(hInst, MAKEINTRESOURCEW(101));
     wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
     wc.lpszClassName = L"ETCProtectorMainWnd";
     wc.hbrBackground = nullptr;
@@ -867,6 +868,11 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 960, 700,
         nullptr, nullptr, hInst, nullptr);
     if (!hwnd) return 1;
+    // 强制设置标题栏/任务栏大图标与小图标，确保左上角图标必定显示
+    HICON hBig = LoadIconW(hInst, MAKEINTRESOURCEW(101));
+    HICON hSmall = LoadIconW(hInst, MAKEINTRESOURCEW(101));
+    if (hBig) SendMessageW(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hBig);
+    if (hSmall) SendMessageW(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hSmall);
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 

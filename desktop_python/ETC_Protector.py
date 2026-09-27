@@ -73,7 +73,7 @@ class ProtectorCore:
                 if not has_manifest or not dexes:
                     return 0, "缺少 AndroidManifest.xml 或 DEX，不是有效APK", "", "", len(dexes)
                 if MARKER_PATH in names:
-                    brand, version = "ETC+ Protector", "2.1"
+                    brand, version = "ETC+加固", "2.1"
                     try:
                         content = z.read(MARKER_PATH).decode("utf-8", "ignore")
                         for line in content.splitlines():
@@ -85,7 +85,7 @@ class ProtectorCore:
                         pass
                     return 2, "该APK已由 {} 加固，禁止二次加固".format(brand), brand, version, len(dexes)
                 if SIG_PATH in names:
-                    return 2, "该APK已由 ETC+ 加固（旧标识），禁止二次加固", "ETC+ Protector", "2.1", len(dexes)
+                    return 2, "该APK已由 ETC+ 加固（旧标识），禁止二次加固", "ETC+加固", "2.1", len(dexes)
                 packs = ["libdexhelper", "libprotectclass", "libjiagu", "libnesec",
                          "libnqshield", "libshell", "stubapp", "secneo", "bangcle",
                          "com.qihoo.util", "libtosprotection", "libseal"]
@@ -98,7 +98,7 @@ class ProtectorCore:
             return 0, "不是有效的APK/ZIP文件", "", "", 0
 
     @staticmethod
-    def harden(input_path, output_path, mode=0, brand="ETC+ Protector", version="2.1"):
+    def harden(input_path, output_path, mode=0, brand="ETC+加固", version="2.1"):
         """加固：不修改任何 DEX 代码，输出全新文件"""
         state, msg, _, _, _ = ProtectorCore.check(input_path)
         if state == 0:
@@ -181,7 +181,7 @@ class ProtectorCore:
                 except Exception:
                     return False, "完整性清单解析失败", []
                 files = manifest.get("files", {})
-                brand = manifest.get("brand", "ETC+ Protector")
+                brand = manifest.get("brand", "ETC+加固")
                 version = manifest.get("version", "2.1")
                 mode = manifest.get("mode", 0)
 
@@ -495,7 +495,7 @@ class MainWindow(QMainWindow):
         self.mode_combo.addItems(["标准加固（完整性保护，推荐）", "深度加固（标识加密）"])
         opt_layout.addWidget(self.mode_combo)
         opt_layout.addWidget(QLabel("品牌:"))
-        self.brand_edit = QLineEdit("ETC+ Protector")
+        self.brand_edit = QLineEdit("ETC+加固")
         self.brand_edit.setMaximumWidth(180)
         opt_layout.addWidget(self.brand_edit)
         opt_layout.addWidget(QLabel("版本:"))
@@ -735,7 +735,7 @@ class MainWindow(QMainWindow):
         if not self.apk_list:
             QMessageBox.warning(self, "警告", "请先添加要加固的APK文件！")
             return
-        brand = self.brand_edit.text().strip() or "ETC+ Protector"
+        brand = self.brand_edit.text().strip() or "ETC+加固"
         version = self.ver_edit.text().strip() or APP_VERSION
         mode = 1 if self.mode_combo.currentIndex() == 1 else 0
         self.set_ui_enabled(False)
