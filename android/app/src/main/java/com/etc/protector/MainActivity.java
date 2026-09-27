@@ -2,12 +2,17 @@ package com.etc.protector;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +33,10 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -160,7 +169,8 @@ public class MainActivity extends Activity {
 
         LinearLayout row1 = new LinearLayout(this);
         row1.setOrientation(LinearLayout.HORIZONTAL);
-        row1.addView(btn("📂 选择APK", v -> pickApk()));
+        row1.addView(btn("📂 浏览APK", v -> browseApk()));
+        row1.addView(btn("📥 系统选择", v -> pickApk()));
         row1.addView(btn("🗑️ 移除", v -> removeSelected(lv)));
         row1.addView(btn("🔎 校验", v -> verifySelected(lv)));
         col.addView(row1);
@@ -564,6 +574,159 @@ public class MainActivity extends Activity {
     }
 
     // ---------------- 交互逻辑 ----------------
+    // ---------------- 内置文件浏览器（不依赖系统选择器） ----------------
+    private void browseApk() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            if (!Environment.isExternalStorageManager()) {
+                Toast.makeText(this,
+                        "需要开启「所有文件访问」权限才能浏览 APK\n请在跳转的设置中打开开关后返回",
+                        Toast.LENGTH_LONG).show();
+                try {
+                    startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                            Uri.parse("package:" + getPackageName())));
+                } catch (Exception e) {
+                    try {
+                        startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
+                    } catch (Exception e2) {
+                        Toast.makeText(this, "请手动到 设置→应用→ETC+加固卫士→所有文件访问 开启", Toast.LENGTH_LONG).show();
+                    }
+                }
+                return;
+            }
+            openBrowser(Environment.getExternalStorageDirectory());
+        } else {
+            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 2001);
+                return;
+            }
+            openBrowser(Environment.getExternalStorageDirectory());
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 2001 && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openBrowser(Environment.getExternalStorageDirectory());
+        } else {
+            Toast.makeText(this, "需要存储权限才能浏览 APK", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void openBrowser(final File dir) {
+        final Dialog dlg = new Dialog(this);
+        dlg.setTitle("📂 浏览 APK — " + dir.getAbsolutePath());
+        LinearLayout ll = new LinearLayout(this);
+        ll.setOrientation(LinearLayout.VERTICAL);
+        ll.setPadding(dp(12), dp(8), dp(12), dp(8));
+
+        final ArrayList<String> names = new ArrayList<>();
+        final ArrayList<File> files = new ArrayList<>();
+        final ArrayAdapter<String> ad = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, names);
+        final ListView lv = new ListView(this);
+        lv.setAdapter(ad);
+        ll.addView(lv, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
+        Button back = btn("⬆ 返回上一级", v -> {
+            File p = dir.getParentFile();
+            if (p != null) { dlg.dismiss(); openBrowser(p); }
+        });
+        ll.addView(back);
+
+        Button cancel = btn("✖ 关闭", v -> dlg.dismiss());
+        ll.addView(cancel);
+
+        lv.setOnItemClickListener((parent, v, pos, id) -> {
+            File f = files.get(pos);
+            if (f.isDirectory()) { dlg.dismiss(); openBrowser(f); }
+            else { addApkFile(f); dlg.dismiss(); }
+        });
+
+        dlg.setContentView(ll);
+        dlg.getWindow().setLayout(dp(560), dp(600));
+        dlg.show();
+        loadDir(dir, names, files, ad);
+    }
+
+    private void loadDir(File dir, ArrayList<String> names, ArrayList<File> files,
+                         ArrayAdapter<String> ad) {
+        names.clear();
+        files.clear();
+        File[] items = dir.listFiles();
+        if (items != null) {
+            List<File> dirs = new ArrayList<>();
+            List<File> apks = new ArrayList<>();
+            for (File f : items) {
+                if (f.isDirectory()) dirs.add(f);
+                else if (f.getName().toLowerCase(Locale.US).endsWith(".apk")) apks.add(f);
+            }
+            Collections.sort(dirs);
+            Collections.sort(apks);
+            for (File d : dirs) { names.add("📁 " + d.getName() + "/"); files.add(d); }
+            for (File a : apks) {
+                names.add("📦 " + a.getName() + "  (" + (a.length() / 1024) + " KB)");
+                files.add(a);
+            }
+        }
+        ad.notifyDataSetChanged();
+    }
+
+    /** 直接读取原文件（不拷贝），校验失败时给出具体原因 */
+    private void addApkFile(File f) {
+        try {
+            String[] st = checkApkDetail(f);
+            int state = Integer.parseInt(st[0]);
+            if (state == 0) {
+                Toast.makeText(this, "不是有效APK：\n" + st[2], Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (state == 2) {
+                Toast.makeText(this, "该APK已由ETC+加固，禁止二次加固！", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (state == 3) {
+                Toast.makeText(this, "检测到其它加固，请先还原为未加固版本", Toast.LENGTH_LONG).show();
+                return;
+            }
+            apkFiles.add(f.getAbsolutePath());
+            apkNames.add(f.getName() + "  [未加固] DEX×" + st[1]);
+            listAdapter.notifyDataSetChanged();
+            statusText.setText("已添加 " + apkFiles.size() + " 个APK，均可安全加固");
+        } catch (Exception e) {
+            Toast.makeText(this, "读取失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** [state, dexCount, reason] */
+    static String[] checkApkDetail(File apk) {
+        try (java.util.zip.ZipFile z = new java.util.zip.ZipFile(apk)) {
+            boolean manifest = false, marker = false, sig = false;
+            int dex = 0;
+            StringBuilder low = new StringBuilder();
+            java.util.Enumeration<? extends java.util.zip.ZipEntry> en = z.entries();
+            while (en.hasMoreElements()) {
+                String n = en.nextElement().getName();
+                low.append(n.toLowerCase(Locale.US)).append(' ');
+                if (n.equals("AndroidManifest.xml")) manifest = true;
+                if (n.endsWith(".dex")) dex++;
+                if (n.equals(MARKER_PATH)) marker = true;
+                if (n.equals(SIG_PATH)) sig = true;
+            }
+            if (!manifest)
+                return new String[]{"0", String.valueOf(dex), "缺少 AndroidManifest.xml（非标准APK）"};
+            if (marker || sig) return new String[]{"2", String.valueOf(dex), ""};
+            String lows = low.toString();
+            for (String p : PACKER_MARKS) if (lows.contains(p)) return new String[]{"3", String.valueOf(dex), ""};
+            return new String[]{"1", String.valueOf(dex), ""};
+        } catch (Exception e) {
+            return new String[]{"0", "0", "无法打开压缩包: " + e.getMessage()};
+        }
+    }
+
     private void pickApk() {
         // 不限制 MIME，避免部分机型把 APK 置灰；选入后按内容校验
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -666,18 +829,19 @@ public class MainActivity extends Activity {
                     int n;
                     while ((n = in.read(buf)) > 0) fout.write(buf, 0, n);
                 }
-                int[] st = checkApk(copy);
-                if (st[0] == 0) {
-                    Toast.makeText(this, "不是有效的APK文件", Toast.LENGTH_LONG).show();
+                String[] st = checkApkDetail(copy);
+                int state = Integer.parseInt(st[0]);
+                if (state == 0) {
+                    Toast.makeText(this, "不是有效APK：\n" + st[2], Toast.LENGTH_LONG).show();
                     copy.delete();
                     return;
                 }
-                if (st[0] == 2) {
+                if (state == 2) {
                     Toast.makeText(this, "该APK已由ETC+加固，禁止二次加固！", Toast.LENGTH_LONG).show();
                     copy.delete();
                     return;
                 }
-                if (st[0] == 3) {
+                if (state == 3) {
                     Toast.makeText(this, "检测到其它加固，请先还原为未加固版本", Toast.LENGTH_LONG).show();
                     copy.delete();
                     return;
